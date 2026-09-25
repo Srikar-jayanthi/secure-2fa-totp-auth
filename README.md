@@ -4,6 +4,52 @@ A production-grade, highly secure authentication system featuring password hashi
 
 ---
 
+## 🚀 Mentor & Evaluator Quickstart Guide
+
+This repository is **100% self-contained and reproducible**. Anyone can clone and verify the entire system on any laptop (macOS, Linux, or Windows) with zero setup.
+
+### 1. Clone & Enter Directory
+```bash
+git clone https://github.com/Srikar-jayanthi/secure-2fa-totp-auth.git
+cd secure-2fa-totp-auth
+```
+
+### 2. Start Services via Docker Compose
+```bash
+docker compose up -d --build
+```
+> **What this does automatically:**
+> - Spins up PostgreSQL 15 (`auth_db`) and Node.js 22 (`auth_app`) containers.
+> - Automatically runs database schema migrations (`users` table with 8 required columns).
+> - Auto-seeds the test user from `submission.json` with AES-256-GCM encrypted TOTP credentials.
+> - Runs health checks (`pg_isready` and `/health`). The API is live on `http://localhost:3000`.
+
+### 3. Run Automated Verification Suites
+
+- **Node.js Integration & Architecture Test Suite** (All 11 test suites):
+  ```bash
+  npm test
+  ```
+- **Python Automated Evaluator** *(Uses Python standard library; no pip installs needed)*:
+  ```bash
+  python tests/verify_evaluator.py
+  ```
+- **Requirement Walkthrough Verification Suite**:
+  ```bash
+  python verify_requirements.py
+  ```
+
+### 4. Pre-Seeded Test Credentials (`submission.json`)
+- **Email**: `test_2fa@example.com`
+- **Password**: `securePassword123`
+- **Plaintext TOTP Secret**: `JBSWY3DPEHPK3PXP`
+- **Generate Live TOTP Codes via CLI Tool**:
+  ```bash
+  node scripts/totp_tool.js JBSWY3DPEHPK3PXP
+  ```
+
+---
+
 ## System Architecture
 
 ```
