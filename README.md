@@ -35,6 +35,17 @@ A production-grade, highly secure authentication system featuring password hashi
                            (T_match > last_totp_window)
 ```
 
+### Architecture Node to Codebase Path Mapping
+
+| Architecture Node | Codebase Path | Concrete Implementation & Responsibility |
+| :--- | :--- | :--- |
+| **User / Web Client** | `tests/` (`integration.test.js`, `verify_evaluator.py`) | Initiates requests; submits credentials, challenge tokens, and TOTP codes |
+| **API Controller** | `src/app.js`, `src/routes/auth.js` | Express router; validates HTTP schemas, handles headers, maps status codes |
+| **Auth & State Manager** | `src/auth.js`, `src/routes/auth.js` | Manages challenge state (`2fa_challenge`), issues session JWTs, enforces route guards |
+| **Encryption (AES-256-GCM)**| `src/crypto.js` | Encrypts Base32 secrets with random 12-byte IVs; validates 16-byte auth tags upon decryption |
+| **TOTP Engine (RFC 6238)** | `src/totp.js` | Generates & validates 6-digit codes with clock drift $[-1, 0, +1]$; constant-time comparison |
+| **PostgreSQL Database** | `src/db/` (`init.sql`, `index.js`, `migrate.js`, `seed.js`) | Persists identities; enforces row-level locking (`FOR UPDATE`) for atomic replay protection |
+
 ---
 
 ## Multi-Stage Authentication State Flow
