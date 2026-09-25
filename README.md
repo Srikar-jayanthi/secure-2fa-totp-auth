@@ -99,6 +99,19 @@ A production-grade, highly secure authentication system featuring password hashi
 
 ---
 
+## Transferable Skills & Concrete Mechanisms
+
+| Skill | Concrete Mechanism in Code | Test / Proof |
+| :--- | :--- | :--- |
+| **Authentication** | Two-factor verification: bcrypt password hash + RFC 6238 TOTP check (`src/routes/auth.js`) | Rejection on bad password / bad code (`tests/integration.test.js`) |
+| **Cryptography** | AES-256-GCM authenticated encryption, unique 12-byte IV per op, auth tag verification (`src/crypto.js`) | Tampering / auth tag failure detection (`tests/crypto_totp.test.js`) |
+| **Security** | Zero plaintext credential leakage at rest; constant-time comparison `crypto.timingSafeEqual` (`src/totp.js`) | Direct DB inspection verifies ciphertext != plaintext |
+| **API Design** | RESTful semantics: `201` registration, `200` login branching, `401` bad factor, `403` bypass rejection | End-to-end status code checks in `tests/integration.test.js` |
+| **State Management** | State machine: `Unauthenticated` -> `ChallengePending` (`scope: 2fa_challenge`) -> `Authenticated` | State transition suite in `tests/architecture_state_machine.test.js` |
+| **Threat Modeling** | Mitigates credential stuffing, DB dumps, replay attacks, race conditions, and 2FA bypass | Replay & concurrency test in `tests/architecture_state_machine.test.js` |
+
+---
+
 ## Database Schema (`users` table)
 
 | Column | Type | Constraints | Description |
