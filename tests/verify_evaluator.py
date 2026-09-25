@@ -101,6 +101,24 @@ def run_evaluator_checks():
         "challenge_token": challenge_token,
         "code": live_code
     })
+    # If the window was already consumed by an immediately preceding test run, wait for rollover
+    if status == 401 and "Replay detected" in str(totp_res):
+        sleep_sec = 31 - (int(time.time()) % 30)
+        print(f"  [*] Window {current_window} already used in previous run; waiting {sleep_sec}s for next window...")
+        time.sleep(sleep_sec)
+        # Refresh challenge token
+        _, login_res2 = make_request("/api/auth/login", method="POST", data={
+            "email": test_user["email"],
+            "password": test_user["password"]
+        })
+        challenge_token = login_res2["challenge_token"]
+        current_window = int(time.time() // 30)
+        live_code = generate_totp(test_user["plaintextTotpSecret"], current_window)
+        status, totp_res = make_request("/api/auth/2fa/login", method="POST", data={
+            "challenge_token": challenge_token,
+            "code": live_code
+        })
+
     assert status == 200, f"2FA login failed with valid code: {status}, {totp_res}"
     assert "token" in totp_res, "Expected full access token in 2FA response"
     session_token = totp_res["token"]

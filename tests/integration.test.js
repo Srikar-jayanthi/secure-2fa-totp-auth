@@ -253,9 +253,9 @@ test('End-to-End API Test Suite (Requirements 4, 5, 6, 7, 8, 9, 10, 11, 12)', as
   assert.ok(seedLoginData.challenge_token, 'Seeded user must receive challenge token');
 
   // Generate live code using testUser.plaintextTotpSecret
-  const liveWindow = getCurrentTimeWindow(Date.now(), 30);
-  const seedLiveCode = generateCode(testUser.plaintextTotpSecret, liveWindow);
-  const seed2FALoginRes = await fetch(`${BASE_URL}/api/auth/2fa/login`, {
+  let liveWindow = getCurrentTimeWindow(Date.now(), 30);
+  let seedLiveCode = generateCode(testUser.plaintextTotpSecret, liveWindow);
+  let seed2FALoginRes = await fetch(`${BASE_URL}/api/auth/2fa/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -263,6 +263,29 @@ test('End-to-End API Test Suite (Requirements 4, 5, 6, 7, 8, 9, 10, 11, 12)', as
       code: seedLiveCode,
     }),
   });
+  if (seed2FALoginRes.status === 401) {
+    const errData = await seed2FALoginRes.clone().json().catch(() => ({}));
+    if (errData.error && errData.error.includes('Replay detected')) {
+      const waitMs = (31 - (Math.floor(Date.now() / 1000) % 30)) * 1000;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      const reLogin = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: testUser.email, password: testUser.password }),
+      });
+      const reLoginData = await reLogin.json();
+      liveWindow = getCurrentTimeWindow(Date.now(), 30);
+      seedLiveCode = generateCode(testUser.plaintextTotpSecret, liveWindow);
+      seed2FALoginRes = await fetch(`${BASE_URL}/api/auth/2fa/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challenge_token: reLoginData.challenge_token,
+          code: seedLiveCode,
+        }),
+      });
+    }
+  }
   assert.equal(seed2FALoginRes.status, 200, 'Seeded user 2FA login must succeed with live TOTP code');
   const seedFinalData = await seed2FALoginRes.json();
   assert.ok(seedFinalData.token, 'Seeded user must receive full access token');

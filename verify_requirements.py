@@ -175,6 +175,16 @@ def verify_api_2fa_login(workspace: str) -> None:
 
     # Valid code -> 200
     code, res = http_post("/api/auth/2fa/login", {"challenge_token": challenge_token, "code": live_code})
+    if code == 401 and "Replay detected" in str(res):
+        sleep_sec = 31 - (int(time.time()) % 30)
+        print(f"  [*] Window {current_window} consumed in preceding test; waiting {sleep_sec}s for next window...")
+        time.sleep(sleep_sec)
+        _, login_res = http_post("/api/auth/login", {"email": sub["email"], "password": sub["password"]})
+        challenge_token = login_res["challenge_token"]
+        current_window = int(time.time() // 30)
+        live_code = generate_totp(sub["plaintextTotpSecret"], current_window)
+        code, res = http_post("/api/auth/2fa/login", {"challenge_token": challenge_token, "code": live_code})
+
     if code != 200 or not res.get("token"):
         raise AssertionError(f"api-2fa-login: valid code failed: {code}, {res}")
 
