@@ -137,7 +137,7 @@ authRouter.post('/2fa/setup', requireFullAuth, async (req, res, next) => {
     const uri = generateOtpAuthUri({
       secret,
       email: userEmail,
-      issuer: 'Secure2FA',
+      issuer: 'YourAppName',
     });
 
     return res.status(200).json({

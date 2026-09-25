@@ -189,13 +189,10 @@ export function verifyTotp(base32Secret, userCode, options = {}) {
 export function generateOtpAuthUri({
   secret,
   email,
-  issuer = 'Secure2FA',
+  issuer = 'YourAppName',
   period = 30,
   digits = 6,
   algorithm = 'SHA1',
 }) {
-  const encodedIssuer = encodeURIComponent(issuer);
-  const encodedEmail = encodeURIComponent(email);
-
-  return `otpauth://totp/${encodedIssuer}:${encodedEmail}?secret=${secret}&issuer=${encodedIssuer}&algorithm=${algorithm}&digits=${digits}&period=${period}`;
+  return `otpauth://totp/${issuer}:${email}?secret=${secret}&issuer=${issuer}&algorithm=${algorithm}&digits=${digits}&period=${period}`;
 }
